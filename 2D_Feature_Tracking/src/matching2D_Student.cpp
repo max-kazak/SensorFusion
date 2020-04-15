@@ -18,20 +18,35 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::Key
     }
     else if (matcherType.compare("MAT_FLANN") == 0)
     {
-        // ...
+    	if (descSource.type() != CV_32F) {
+			// OpenCV bug workaround : convert binary descriptors to floating point due to a bug in current OpenCV implementation
+			descSource.convertTo(descSource, CV_32F);
+			descRef.convertTo(descRef, CV_32F);
+		}
+
+		matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
     }
 
     // perform matching task
     if (selectorType.compare("SEL_NN") == 0)
     { // nearest neighbor (best match)
-
         matcher->match(descSource, descRef, matches); // Finds the best match for each descriptor in desc1
     }
     else if (selectorType.compare("SEL_KNN") == 0)
     { // k nearest neighbors (k=2)
+		vector<vector<cv::DMatch>> knn_matches;
+		matcher->knnMatch(descSource, descRef, knn_matches, 2); // finds the 2 best matches
 
-        // ...
+		// filter matches using descriptor distance ratio test
+		double minDescDistRatio = 0.8;
+		for (auto & knn_match : knn_matches) {
+			if (knn_match[0].distance < minDescDistRatio * knn_match[1].distance) {
+				matches.push_back(knn_match[0]);
+			}
+		}
     }
+
+    cout << "Number of matched keypoints = " << matches.size() << endl;
 }
 
 // Use one of several types of state-of-art descriptors to uniquely identify keypoints
@@ -48,11 +63,24 @@ void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descr
 
         extractor = cv::BRISK::create(threshold, octaves, patternScale);
     }
-    else
-    {
-
-        //...
-    }
+    else if (descriptorType.compare("BRIEF") == 0) {
+		extractor = cv::xfeatures2d::BriefDescriptorExtractor::create();
+	}
+	else if (descriptorType.compare("ORB") == 0) {
+		extractor = cv::ORB::create();
+	}
+	else if (descriptorType.compare("FREAK") == 0) {
+		extractor = cv::xfeatures2d::FREAK::create();
+	}
+	else if (descriptorType.compare("AKAZE") == 0) {
+		extractor = cv::AKAZE::create();
+	}
+	else if (descriptorType.compare("SIFT") == 0){
+		extractor = cv::xfeatures2d::SIFT::create();
+	}
+	else {
+		throw runtime_error("non-supported descriptor type " + descriptorType);
+	}
 
     // perform feature description
     double t = (double)cv::getTickCount();

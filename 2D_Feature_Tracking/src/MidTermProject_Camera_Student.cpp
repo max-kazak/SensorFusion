@@ -38,7 +38,8 @@ int main(int argc, const char *argv[])
     // misc
     int dataBufferSize = 2;       // no. of images which are held in memory (ring buffer) at the same time
     vector<DataFrame> dataBuffer; // list of data frames which are held in memory at the same time
-    bool bVis = false;            // visualize results
+    bool bVis = true;            // visualize matches
+    bool bVisKP = false;		  // visualize keypoints
 
     /* MAIN LOOP OVER ALL IMAGES */
 
@@ -80,13 +81,13 @@ int main(int argc, const char *argv[])
         //// -> HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
 
         if (detectorType.compare("SHITOMASI") == 0) {
-            detKeypointsShiTomasi(keypoints, imgGray, bVis);
+            detKeypointsShiTomasi(keypoints, imgGray, bVisKP);
         }
         else if (detectorType.compare("HARRIS") == 0) {
-            detKeypointsHarris(keypoints, imgGray, bVis);
+            detKeypointsHarris(keypoints, imgGray, bVisKP);
         }
         else {
-        	detKeypointsModern(keypoints, imgGray, detectorType, bVis);
+        	detKeypointsModern(keypoints, imgGray, detectorType, bVisKP);
         }
         //// EOF STUDENT ASSIGNMENT
 
@@ -134,7 +135,7 @@ int main(int argc, const char *argv[])
         //// -> BRIEF, ORB, FREAK, AKAZE, SIFT
 
         cv::Mat descriptors;
-        string descriptorType = "BRISK"; // BRIEF, ORB, FREAK, AKAZE, SIFT
+        string descriptorType = "ORB"; // BRIEF, ORB, FREAK, AKAZE, SIFT
         descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType);
         //// EOF STUDENT ASSIGNMENT
 
@@ -169,7 +170,7 @@ int main(int argc, const char *argv[])
             cout << "#4 : MATCH KEYPOINT DESCRIPTORS done" << endl;
 
             // visualize matches between current and previous image
-            bVis = true;
+            //bVis = true;
             if (bVis)
             {
                 cv::Mat matchImg = ((dataBuffer.end() - 1)->cameraImg).clone();
@@ -185,7 +186,7 @@ int main(int argc, const char *argv[])
                 cout << "Press key to continue to next image" << endl;
                 cv::waitKey(0); // wait for key to be pressed
             }
-            bVis = false;
+            //bVis = false;
         }
 
     } // eof loop over all images
