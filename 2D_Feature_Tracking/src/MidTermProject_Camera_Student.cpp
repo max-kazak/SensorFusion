@@ -18,6 +18,23 @@
 
 using namespace std;
 
+// Keypoints extractor
+string detectorType = "ORB"; // SHITOMASI, HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
+//Descriptor extractor
+string descriptorType = "ORB"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
+// Matcher
+string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
+string descriptorFamily = (descriptorType.compare("SIFT") == 0) ? "DES_BINARY" : "DES_HOG"; // DES_BINARY, DES_HOG
+string selectorType = "SEL_KNN";       // SEL_NN, SEL_KNN
+
+// misc parameters
+int dataBufferSize = 2;       // no. of images which are held in memory (ring buffer) at the same time
+bool bVis = false;            // visualize matches
+bool bVisKP = false;		  // visualize keypoints
+bool bFocusOnVehicle = true;  // only keep keypoints on the preceding vehicle
+bool bLimitKpts = false;	  // optional : limit number of keypoints (helpful for debugging and learning)
+
+
 /* MAIN PROGRAM */
 int main(int argc, const char *argv[])
 {
@@ -36,15 +53,14 @@ int main(int argc, const char *argv[])
     int imgFillWidth = 4;  // no. of digits which make up the file index (e.g. img-0001.png)
 
     // misc
-    int dataBufferSize = 2;       // no. of images which are held in memory (ring buffer) at the same time
     vector<DataFrame> dataBuffer; // list of data frames which are held in memory at the same time
-    bool bVis = true;            // visualize matches
-    bool bVisKP = false;		  // visualize keypoints
+
 
     /* MAIN LOOP OVER ALL IMAGES */
 
     for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex++)
     {
+    	cout << "#0 : PROCESSING IMAGE  " << imgIndex << " ..." << endl;
         /* LOAD IMAGE INTO BUFFER */
 
         // assemble filenames for current index
@@ -74,7 +90,6 @@ int main(int argc, const char *argv[])
 
         // extract 2D keypoints from current image
         vector<cv::KeyPoint> keypoints; // create empty feature list for current image
-        string detectorType = "ORB";
 
         //// STUDENT ASSIGNMENT
         //// TASK MP.2 -> add the following keypoint detectors in file matching2D.cpp and enable string-based selection based on detectorType
@@ -95,7 +110,6 @@ int main(int argc, const char *argv[])
         //// TASK MP.3 -> only keep keypoints on the preceding vehicle
 
         // only keep keypoints on the preceding vehicle
-        bool bFocusOnVehicle = true;
         cv::Rect vehicleRect(535, 180, 180, 150);
         if (bFocusOnVehicle)
         {
@@ -111,7 +125,6 @@ int main(int argc, const char *argv[])
         //// EOF STUDENT ASSIGNMENT
 
         // optional : limit number of keypoints (helpful for debugging and learning)
-        bool bLimitKpts = false;
         if (bLimitKpts)
         {
             int maxKeypoints = 50;
@@ -135,7 +148,7 @@ int main(int argc, const char *argv[])
         //// -> BRIEF, ORB, FREAK, AKAZE, SIFT
 
         cv::Mat descriptors;
-        string descriptorType = "ORB"; // BRIEF, ORB, FREAK, AKAZE, SIFT
+
         descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType);
         //// EOF STUDENT ASSIGNMENT
 
@@ -150,9 +163,6 @@ int main(int argc, const char *argv[])
             /* MATCH KEYPOINT DESCRIPTORS */
 
             vector<cv::DMatch> matches;
-            string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
-            string descriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
-            string selectorType = "SEL_NN";       // SEL_NN, SEL_KNN
 
             //// STUDENT ASSIGNMENT
             //// TASK MP.5 -> add FLANN matching in file matching2D.cpp
@@ -160,7 +170,7 @@ int main(int argc, const char *argv[])
 
             matchDescriptors((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints,
                              (dataBuffer.end() - 2)->descriptors, (dataBuffer.end() - 1)->descriptors,
-                             matches, descriptorType, matcherType, selectorType);
+                             matches, descriptorFamily, matcherType, selectorType);
 
             //// EOF STUDENT ASSIGNMENT
 
