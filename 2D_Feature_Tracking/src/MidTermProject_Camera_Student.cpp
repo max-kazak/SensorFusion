@@ -19,17 +19,17 @@
 using namespace std;
 
 // Keypoints extractor
-string detectorType = "ORB"; // SHITOMASI, HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
+string detectorType = "FAST"; // SHITOMASI, HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
 //Descriptor extractor
-string descriptorType = "ORB"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
+string descriptorType = "BRIEF"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
 // Matcher
 string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
-string descriptorFamily = (descriptorType.compare("SIFT") == 0) ? "DES_BINARY" : "DES_HOG"; // DES_BINARY, DES_HOG
+string descriptorFamily = (descriptorType.compare("SIFT") == 0) ? "DES_HOG" : "DES_BINARY"; // DES_BINARY, DES_HOG
 string selectorType = "SEL_KNN";       // SEL_NN, SEL_KNN
 
 // misc parameters
 int dataBufferSize = 2;       // no. of images which are held in memory (ring buffer) at the same time
-bool bVis = false;            // visualize matches
+bool bVis = true;            // visualize matches
 bool bVisKP = false;		  // visualize keypoints
 bool bFocusOnVehicle = true;  // only keep keypoints on the preceding vehicle
 bool bLimitKpts = false;	  // optional : limit number of keypoints (helpful for debugging and learning)
@@ -57,6 +57,12 @@ int main(int argc, const char *argv[])
 
 
     /* MAIN LOOP OVER ALL IMAGES */
+
+    double tTotal = 0.0;
+    int nKeypointsTotal = 0;
+    int nMatchesTotal = 0;
+
+    double t;
 
     for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex++)
     {
@@ -96,14 +102,17 @@ int main(int argc, const char *argv[])
         //// -> HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
 
         if (detectorType.compare("SHITOMASI") == 0) {
-            detKeypointsShiTomasi(keypoints, imgGray, bVisKP);
+            t = detKeypointsShiTomasi(keypoints, imgGray, bVisKP);
         }
         else if (detectorType.compare("HARRIS") == 0) {
-            detKeypointsHarris(keypoints, imgGray, bVisKP);
+            t = detKeypointsHarris(keypoints, imgGray, bVisKP);
         }
         else {
-        	detKeypointsModern(keypoints, imgGray, detectorType, bVisKP);
+        	t = detKeypointsModern(keypoints, imgGray, detectorType, bVisKP);
         }
+
+        tTotal += t;
+        nKeypointsTotal += keypoints.size();
         //// EOF STUDENT ASSIGNMENT
 
         //// STUDENT ASSIGNMENT
@@ -149,7 +158,8 @@ int main(int argc, const char *argv[])
 
         cv::Mat descriptors;
 
-        descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType);
+        tTotal += descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType);
+
         //// EOF STUDENT ASSIGNMENT
 
         // push descriptors for current frame to end of data buffer
@@ -172,6 +182,7 @@ int main(int argc, const char *argv[])
                              (dataBuffer.end() - 2)->descriptors, (dataBuffer.end() - 1)->descriptors,
                              matches, descriptorFamily, matcherType, selectorType);
 
+            nMatchesTotal += matches.size();
             //// EOF STUDENT ASSIGNMENT
 
             // store matches in current data frame
@@ -200,6 +211,12 @@ int main(int argc, const char *argv[])
         }
 
     } // eof loop over all images
+
+    cout << endl <<
+    		"# RESULTS : ProcTime=" << 1000 * tTotal / 1.0 << "ms" <<
+    		"; Keypoints=" << nKeypointsTotal <<
+			"; Matches=" << nMatchesTotal << " (" << 100.0 * nMatchesTotal / nKeypointsTotal << "%)" <<
+			";" << endl;
 
     return 0;
 }
