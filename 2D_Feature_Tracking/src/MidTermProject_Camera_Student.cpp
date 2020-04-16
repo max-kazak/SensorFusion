@@ -19,7 +19,7 @@
 using namespace std;
 
 // Keypoints extractor
-string detectorType = "FAST"; // SHITOMASI, HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
+string detectorType = "BRISK"; // SHITOMASI, HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
 //Descriptor extractor
 string descriptorType = "BRIEF"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
 // Matcher
