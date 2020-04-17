@@ -112,9 +112,9 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 		// augment object with some key data
 		char str1[200], str2[200];
 		sprintf(str1, "id=%d, #pts=%d", it1->boxID, (int)it1->lidarPoints.size());
-		cv::putText(topviewImg, str1, cv::Point2f(left-250, bottom+50), cv::FONT_ITALIC, 2, currColor);
-		sprintf(str2, "xmin=%2.2f m, yw=%2.2f m", xwmin, ywmax-ywmin);
-		cv::putText(topviewImg, str2, cv::Point2f(left-250, bottom+125), cv::FONT_ITALIC, 2, currColor);
+		cv::putText(topviewImg, str1, cv::Point2f(left-50, bottom+35), cv::FONT_ITALIC, 1, currColor);
+//		sprintf(str2, "xmin=%2.2f m, yw=%2.2f m", xwmin, ywmax-ywmin);
+//		cv::putText(topviewImg, str2, cv::Point2f(left-50, bottom+75), cv::FONT_ITALIC, 1, currColor);
     }
 
     // plot distance markers
@@ -127,7 +127,7 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 	}
 
     // display image
-    const float windowScale = 0.5;
+    const float windowScale = 1;
     string windowName = "3D Objects";
     cv::namedWindow(windowName, cv::WINDOW_NORMAL);
     cv::resizeWindow(windowName, imageSize.width * windowScale, imageSize.height * windowScale);
@@ -169,10 +169,10 @@ void clusterLidarWithROI(std::vector<BoundingBox> &boundingBoxes, std::vector<Li
         {
             // shrink current bounding box slightly to avoid having too many outlier points around the edges
             cv::Rect smallerBox;
-            smallerBox.x = (*it2).roi.x + shrinkFactor * (*it2).roi.width / 2.0;
-            smallerBox.y = (*it2).roi.y + shrinkFactor * (*it2).roi.height / 2.0;
-            smallerBox.width = (*it2).roi.width * (1 - shrinkFactor);
-            smallerBox.height = (*it2).roi.height * (1 - shrinkFactor);
+            smallerBox.x = (*it2).roi.x + shrinkFactor * (*it2).roi.width / 2.0; // @suppress("Field cannot be resolved")
+            smallerBox.y = (*it2).roi.y + shrinkFactor * (*it2).roi.height / 2.0; // @suppress("Field cannot be resolved")
+            smallerBox.width = (*it2).roi.width * (1 - shrinkFactor); // @suppress("Field cannot be resolved")
+            smallerBox.height = (*it2).roi.height * (1 - shrinkFactor); // @suppress("Field cannot be resolved")
 
             // check wether point is within current bounding box
             if (smallerBox.contains(pt))
