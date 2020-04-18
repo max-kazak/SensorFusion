@@ -148,7 +148,43 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
 void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, 
                       std::vector<cv::DMatch> kptMatches, double frameRate, double &TTC, cv::Mat *visImg)
 {
-    // ...
+	// Compute distance ratios on every pair of keypoints, O(n^2) on the number of matches contained within the ROI
+	    vector<double> distRatios;
+	    for (auto it1 = kptMatches.begin(); it1 != kptMatches.end() - 1; ++it1) {
+	        cv::KeyPoint kpOuterCurr = kptsCurr.at(it1->trainIdx);  // kptsCurr is indexed by trainIdx, see NOTE in matchBoundinBoxes
+	        cv::KeyPoint kpOuterPrev = kptsPrev.at(it1->queryIdx);  // kptsPrev is indexed by queryIdx, see NOTE in matchBoundinBoxes
+
+	        for (auto it2 = kptMatches.begin() + 1; it2 != kptMatches.end(); ++it2) {
+	            cv::KeyPoint kpInnerCurr = kptsCurr.at(it2->trainIdx);  // kptsCurr is indexed by trainIdx, see NOTE in matchBoundinBoxes
+	            cv::KeyPoint kpInnerPrev = kptsPrev.at(it2->queryIdx);  // kptsPrev is indexed by queryIdx, see NOTE in matchBoundinBoxes
+
+	            // Use cv::norm to calculate the current and previous Euclidean distances between each keypoint in the pair
+	            double distCurr = cv::norm(kpOuterCurr.pt - kpInnerCurr.pt);
+	            double distPrev = cv::norm(kpOuterPrev.pt - kpInnerPrev.pt);
+
+	            double minDist = 100.0;  // Threshold the calculated distRatios by requiring a minimum current distance between keypoints
+
+	            // Avoid division by zero and apply the threshold
+	            if (distPrev > std::numeric_limits<double>::epsilon() && distCurr >= minDist) {
+	                double distRatio = distCurr / distPrev;
+	                distRatios.push_back(distRatio);
+	            }
+	        }
+	    }
+
+	    // Only continue if the vector of distRatios is not empty
+	    if (distRatios.size() == 0)
+	    {
+	        TTC = std::numeric_limits<double>::quiet_NaN();
+	        return;
+	    }
+
+	    // As with computeTTCLidar, use the median as a reasonable method of excluding outliers
+	    std::sort(distRatios.begin(), distRatios.end());
+	    double medianDistRatio = distRatios[distRatios.size() / 2];
+
+	    // Finally, calculate a TTC estimate based on these 2D camera features
+	    TTC = (-1.0 / frameRate) / (1 - medianDistRatio);
 }
 
 
