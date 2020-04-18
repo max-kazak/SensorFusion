@@ -136,7 +136,11 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 // associate a given bounding box with the keypoints it contains
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
 {
-    // ...
+	for (cv::DMatch match : kptMatches) {
+	        if (boundingBox.roi.contains(kptsCurr[match.trainIdx].pt)) {
+	            boundingBox.kptMatches.push_back(match);
+	        }
+	    }
 }
 
 
@@ -147,20 +151,18 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
     // ...
 }
 
-void sortLidarPoints(std::vector<LidarPoint> &lidarPoints)
-{
-    std::sort(lidarPoints.begin(), lidarPoints.end(), [](LidarPoint a, LidarPoint b) {
-        return a.x < b.x;  // Sort ascending on the x coordinate only
-    });
-}
-
 
 void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
                      std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
 {
 	// sort lidar points
-	sortLidarPoints(lidarPointsPrev);
-	sortLidarPoints(lidarPointsCurr);
+	std::sort(lidarPointsPrev.begin(), lidarPointsPrev.end(), [](LidarPoint a, LidarPoint b) {
+	        return a.x < b.x;  // Sort ascending on the x coordinate only
+	    });
+	std::sort(lidarPointsCurr.begin(), lidarPointsCurr.end(), [](LidarPoint a, LidarPoint b) {
+	        return a.x < b.x;  // Sort ascending on the x coordinate only
+	    });
+
 	// take medium values of x
 	double d0 = lidarPointsPrev[lidarPointsPrev.size()/2].x;
 	double d1 = lidarPointsCurr[lidarPointsCurr.size()/2].x;
