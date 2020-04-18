@@ -147,11 +147,25 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
     // ...
 }
 
+void sortLidarPoints(std::vector<LidarPoint> &lidarPoints)
+{
+    std::sort(lidarPoints.begin(), lidarPoints.end(), [](LidarPoint a, LidarPoint b) {
+        return a.x < b.x;  // Sort ascending on the x coordinate only
+    });
+}
+
 
 void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
                      std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
 {
-    // ...
+	// sort lidar points
+	sortLidarPoints(lidarPointsPrev);
+	sortLidarPoints(lidarPointsCurr);
+	// take medium values of x
+	double d0 = lidarPointsPrev[lidarPointsPrev.size()/2].x;
+	double d1 = lidarPointsCurr[lidarPointsCurr.size()/2].x;
+
+	TTC = d1 * (1.0 / frameRate) / (d0 - d1);
 }
 
 void printConnections(std::map<int, std::map<int, int>> connections);
