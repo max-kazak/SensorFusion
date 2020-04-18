@@ -295,8 +295,6 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
     			assignedCurBoxes.insert(bestCurBox);
     		}
     	}
-
-
     }
 }
 
