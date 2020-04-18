@@ -2,6 +2,7 @@
 #include <iostream>
 #include <algorithm>
 #include <numeric>
+#include <set>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
@@ -153,8 +154,95 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
     // ...
 }
 
+void printConnections(std::map<int, std::map<int, int>> connections);
 
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
-    // ...
+    std::map<int, std::map<int, int>> connections {};  // map<prevBoxID, map<curBoxID, nConn>>, nConn - number of shared keypoints between curBox and prevBox
+
+    for (auto kpMatch : matches) {
+    	cv::KeyPoint prevKp = prevFrame.keypoints[kpMatch.queryIdx];
+    	cv::KeyPoint curKp = currFrame.keypoints[kpMatch.trainIdx];
+
+    	bool onlyOneFound=false;
+    	BoundingBox prevBox;
+    	for (auto bb: prevFrame.boundingBoxes) {
+    		if (bb.roi.contains(prevKp.pt)) {
+    			if (!onlyOneFound) {
+    				// keypoint is in the box and its the first one
+    				prevBox = bb;
+    				onlyOneFound = true;
+    			} else {
+    				// keypoint belong to more than one box
+    				onlyOneFound = false;
+    				break; // stop looking at other boxes
+    			}
+    		}
+    	}
+
+    	if (onlyOneFound) {
+    		// found bounding box for prevKp and its the only one.
+
+    		onlyOneFound = false;
+    		BoundingBox curBox;
+			for (auto bb: currFrame.boundingBoxes) {
+				if (bb.roi.contains(curKp.pt)) {
+					if (!onlyOneFound) {
+						// keypoint is in the box and its the first one
+						curBox = bb;
+						onlyOneFound = true;
+					} else {
+						// keypoint belong to more than one box
+						onlyOneFound = false;
+						break; // stop looking at other boxes
+					}
+				}
+			}
+
+			if (onlyOneFound) {
+				// both kp belong to unique boxes in their respective frames
+				++connections[prevBox.boxID][curBox.boxID];
+			}
+    	}
+
+    	//printConnections(connections);
+
+    	// Find best matches
+    	int nConnMax;
+    	int bestCurBox;
+    	std::set<int> assignedCurBoxes;
+    	for (auto conn : connections) {
+    		int prevBoxId = conn.first;
+    		nConnMax = 0;
+    		bestCurBox = -1;
+    		for (auto boxConn : conn.second) { // @suppress("Symbol is not resolved")
+    			int curBoxId = boxConn.first;
+    			int nConn = boxConn.second;
+    			if ( (nConn > nConnMax) && (assignedCurBoxes.find(curBoxId) == assignedCurBoxes.end())) {
+    				// curBox has more connections than the best choice so far and isn't assigned yet
+    				nConnMax = nConn;
+    				bestCurBox = curBoxId;
+    			}
+    		}
+    		if (bestCurBox != -1) {
+    			bbBestMatches[prevBoxId] = bestCurBox;
+    			assignedCurBoxes.insert(bestCurBox);
+    		}
+    	}
+
+
+    }
 }
+
+void printConnections(std::map<int, std::map<int, int>> connections) {
+	cout << endl << "Connections map printout:" << endl;
+	for (auto it1=connections.begin(); it1!=connections.end(); ++it1){
+		cout << "\tprevBoxId: " << it1->first << " | nAssociates = " << it1->second.size() << endl;
+		for (auto it2=it1->second.begin(); it2!=it1->second.end(); ++it2)
+			cout << "\t\tcurBoxId: " << it2->first << "| nconn = " << it2->second << endl;
+	}
+	cout << "" << endl;
+}
+
+
+
