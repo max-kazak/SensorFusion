@@ -40,8 +40,8 @@ int main(int argc, const char *argv[])
     int imgFillWidth = 4;  // no. of digits which make up the file index (e.g. img-0001.png)
 
     // object detection
-    string detectorType = "SHITOMASI";	//SHITOMASI, HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
-    string descriptorType = "SIFT"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
+    string detectorType = "FAST";	//SHITOMASI, HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
+    string descriptorType = "BRIEF"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
     string yoloBasePath = dataPath + "dat/yolo/";
     string yoloClassesFile = yoloBasePath + "coco.names";
     string yoloModelConfiguration = yoloBasePath + "yolov3.cfg";
@@ -76,7 +76,7 @@ int main(int argc, const char *argv[])
     vector<DataFrame> dataBuffer; // list of data frames which are held in memory at the same time
     bool bVis = false;            // visualize results
 
-    bool bReportShort = true;
+    bool bReportShort = false;
     stringstream report;		  //string containing ttc report
     if (!bReportShort)
 		report << endl <<
@@ -278,7 +278,7 @@ int main(int argc, const char *argv[])
                     computeTTCCamera((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, currBB->kptMatches, sensorFrameRate, ttcCamera);
                     //// EOF STUDENT ASSIGNMENT
 
-                    bVis = false;
+                    bVis = true;
                     if (bVis)
                     {
                         cv::Mat visImg = (dataBuffer.end() - 1)->cameraImg.clone();
