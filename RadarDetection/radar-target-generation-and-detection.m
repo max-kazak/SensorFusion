@@ -9,14 +9,24 @@ clc;
 % Max Velocity = 100 m/s
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%Operating carrier frequency of Radar 
+fc= 77e9;             %carrier freq
+
+maxR = 200;
+rangeRes = 1;
+maxV = 100;
+
 %speed of light = 3e8
+c = 3e8;
+
 %% User Defined Range and Velocity of target
 % *%TODO* :
 % define the target's initial position and velocity. Note : Velocity
 % remains contant
+
+R = 100;
+v = -42;
  
-
-
 %% FMCW Waveform Generation
 
 % *%TODO* :
@@ -25,8 +35,6 @@ clc;
 % chirp using the requirements above.
 
 
-%Operating carrier frequency of Radar 
-fc= 77e9;             %carrier freq
 
                                                           
 %The number of chirps in one sequence. Its ideal to have 2^ value for the ease of running the FFT
