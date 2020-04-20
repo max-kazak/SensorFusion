@@ -34,7 +34,9 @@ v = -42;
 % Calculate the Bandwidth (B), Chirp Time (Tchirp) and Slope (slope) of the FMCW
 % chirp using the requirements above.
 
-
+B = c / (2*rangeRes);
+Tchirp = 5.5 * 2 * maxR / c;
+slope = B/Tchirp;
 
                                                           
 %The number of chirps in one sequence. Its ideal to have 2^ value for the ease of running the FFT
