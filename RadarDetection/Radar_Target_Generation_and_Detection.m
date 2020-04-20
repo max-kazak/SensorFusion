@@ -218,19 +218,28 @@ end
 %than the Range Doppler Map as the CUT cannot be located at the edges of
 %matrix. Hence,few cells will not be thresholded. To keep the map size same
 % set those values to 0. 
- 
 
-for ind_r = 1 : Nr/2 - Tr - Gr
-    for ind_d = Nd - Td - Gd : Nd
-        CFAR(ind_r, ind_d) = 0;
-    end
-end
+% Since CFAR matrix was initialized with zero edge cases already has value
+% of 0. But if another initialization was used (e.g. random) then block 
+% below has to be used.
+%
+%for ind_r = 1 : Tr + Gr
+%    for ind_d = 1 : Td + Gd
+%        CFAR(ind_r, ind_d) = 0;
+%    end
+%    for ind_d = Nd - Td - Gd : Nd
+%        CFAR(ind_r, ind_d) = 0;
+%    end
+%end
 
-for ind_r = 1 : Nr/2 - Tr - Gr
-    for ind_d = Nd - Td - Gd : Nd
-        CFAR(ind_r, ind_d) = 0;
-    end
-end
+%for ind_r = Nr/2 - Tr - Gr : Nr/2
+%    for ind_d = 1 : Td + Gd
+%        CFAR(ind_r, ind_d) = 0;
+%    end
+%    for ind_d = Nd - Td - Gd : Nd
+%        CFAR(ind_r, ind_d) = 0;
+%    end
+%end
 
 
 % *%TODO* :
