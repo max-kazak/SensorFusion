@@ -64,23 +64,23 @@ td=zeros(1,length(t));
 %% Signal generation and Moving Target simulation
 % Running the radar scenario over the time. 
 
+%For each time stamp update the Range of the Target for constant velocity.
 for i=1:length(t)         
     
-    
-    % *%TODO* :
-    %For each time stamp update the Range of the Target for constant velocity. 
+    % signal time delay due to travel time
+    tau = (R + v * t(i)) / c;
     
     % *%TODO* :
     %For each time sample we need update the transmitted and
     %received signal. 
-    Tx(i) = 
-    Rx (i)  =
+    Tx(i) = cos( 2 * pi * ( fc * t(i) + slope * t(i)^2 / 2 ) );
+    Rx (i) = cos( 2 * pi * (fc * (t(i) - tau) + slope * (t(i) - tau)^2 / 2 )  );
     
     % *%TODO* :
     %Now by mixing the Transmit and Receive generate the beat signal
     %This is done by element wise matrix multiplication of Transmit and
     %Receiver Signal
-    Mix(i) = 
+    Mix(i) = Tx(i) * Rx(i);
     
 end
 
@@ -90,17 +90,21 @@ end
  % *%TODO* :
 %reshape the vector into Nr*Nd array. Nr and Nd here would also define the size of
 %Range and Doppler FFT respectively.
+Beat = reshape(Mix, [Nr, Nd]);
 
  % *%TODO* :
 %run the FFT on the beat signal along the range bins dimension (Nr) and
 %normalize.
+fft_signal = fft(Beat) / Nr;
 
  % *%TODO* :
 % Take the absolute value of FFT output
+fft_signal_abs = abs(fft_signal);
 
  % *%TODO* :
 % Output of FFT is double sided signal, but we are interested in only one side of the spectrum.
 % Hence we throw out half of the samples.
+fft_signal_cut = fft_signal_abs( 1 : Nr/2 );
 
 
 %plotting the range
@@ -109,9 +113,10 @@ subplot(2,1,1)
 
  % *%TODO* :
  % plot FFT output 
-
+f = Nr / length( fft_signal_cut ) * ( 0 : (Nr/2 - 1) );
+plot(f, fft_signal_cut);
  
-axis ([0 200 0 1]);
+axis ([0 200 0 0.5]);
 
 
 
