@@ -10,7 +10,7 @@ Following graphs show radar processing results with target clearly visible.
 ![FFT](images/range_frome_fft.png) 
 
 2. Second graph represents second pass of FFT filter (aka 2DFFT) with also esitmated velocity.
-![2DFFT](images/2DFFT.png)
+![2DFFT](images/2DFTT.png)
 
 3. Third graph shows filtered 2DFFT data using CFAR which eliminates data noise without significant increase in false positives.
 ![CFAR](images/CFAR.png)
