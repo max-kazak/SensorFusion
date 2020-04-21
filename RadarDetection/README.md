@@ -17,7 +17,7 @@ Following graphs show radar processing results with target clearly visible.
 
 # Implementation steps for the 2D CFAR process.
 
-Code lines: 153-250
+Code lines: 154-251
 
 Steps taken:
  - Slide the window with training and guard margins across the complete signal matrix and calculate filtered value for CUT cell in the middle of the window. 
