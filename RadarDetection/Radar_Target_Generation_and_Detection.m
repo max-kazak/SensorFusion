@@ -38,6 +38,8 @@ B = c / (2*rangeRes);
 Tchirp = 5.5 * 2 * maxR / c;
 slope = B/Tchirp;
 
+disp(slope);
+
                                                           
 %The number of chirps in one sequence. Its ideal to have 2^ value for the ease of running the FFT
 %for Doppler Estimation. 
@@ -68,7 +70,7 @@ td=zeros(1,length(t));
 for i=1:length(t)         
     
     % signal time delay due to travel time
-    tau = (R + v * t(i)) / c;
+    tau = 2 * (R + v * t(i)) / c;
     
     % *%TODO* :
     %For each time sample we need update the transmitted and
@@ -113,8 +115,7 @@ subplot(2,1,1)
 
  % *%TODO* :
  % plot FFT output 
-f = Nr / length( fft_signal_cut ) * ( 0 : (Nr/2 - 1) );
-plot(f, fft_signal_cut);
+plot( (0 : Nr/2 - 1), fft_signal_cut);
  
 axis ([0 200 0 0.5]);
 
