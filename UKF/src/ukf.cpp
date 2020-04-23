@@ -27,6 +27,9 @@ UKF::UKF() {
   // Process noise standard deviation yaw acceleration in rad/s^2
   std_yawdd_ = 0.6;
 
+  // Augmented covariance matrix
+  P_aug_ = MatrixXd(n_aug_, n_aug_);
+
   /**
    * DO NOT MODIFY measurement noise values below.
    * These are provided by the sensor manufacturer.
@@ -50,6 +53,19 @@ UKF::UKF() {
   /**
    * End DO NOT MODIFY section for measurement noise values
    */
+
+  n_z_lidar_ = 2;
+  n_z_radar_ = 3;
+
+  R_radar_ = MatrixXd(n_z_radar_,n_z_radar_);
+  R_radar_ << pow(std_radr_,2), 0, 0,
+              0, pow(std_radphi_,2), 0,
+              0, 0, pow(std_radrd_,2);
+
+  R_lidar_ = MatrixXd(n_z_lidar_,n_z_lidar_);
+  R_lidar_ << pow(std_laspx_,2), 0,
+              0, pow(std_laspy_,2);
+
 
   // State dim
   n_x_ = 5;
@@ -109,6 +125,14 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
      // Initialize P as Identity matrix and lower initial stddev to 0.3
      P_ = 0.3 * MatrixXd::Identity(5,5);
 
+     P_aug_.fill(0.0);
+     P_aug_.topLeftCorner(n_x_, n_x_) = P_;
+     P_aug_(n_x_, n_x_) = std_a_ * std_a_;
+     P_aug_(n_x_+1, n_x_+1) = std_yawdd_ * std_yawdd_;
+
+     MatrixXd L = P_aug_.llt().matrixL();  // square root of P_aug_ matrix
+     A_ = sqrt(lambda_ + n_aug_) * L;
+
      is_initialized_ = true;
 
    }
@@ -145,21 +169,13 @@ void UKF::Prediction(double delta_t) {
   x_aug(5) = 0;
   x_aug(6) = 0;
 
-  MatrixXd P_aug = MatrixXd(n_aug_, n_aug_);  // Augment the covariance matrix
-  P_aug.fill(0.0);
-  P_aug.topLeftCorner(n_x_, n_x_) = P_;
-  P_aug(n_x_, n_x_) = std_a_ * std_a_;
-  P_aug(n_x_+1, n_x_+1) = std_yawdd_ * std_yawdd_;
-
   // Gen sigma points
   MatrixXd Xsig = MatrixXd(n_aug_, n_sig_);
-  MatrixXd L = P_aug.llt().matrixL();  // square root matrix
-  MatrixXd A = sqrt(lambda_ + n_aug_) * L;
 
   Xsig.col(0) = x_aug; // First column of Xsig is central sigma point
   for (int i=0; i<n_aug_; ++i) {
-    Xsig.col(i+1)       = x_aug + A.col(i);
-    Xsig.col(i+1+n_aug_) = x_aug - A.col(i);
+    Xsig.col(i+1)       = x_aug + A_.col(i);
+    Xsig.col(i+1+n_aug_) = x_aug - A_.col(i);
   }
 
   /**
@@ -240,11 +256,69 @@ void UKF::Prediction(double delta_t) {
 
 void UKF::UpdateLidar(MeasurementPackage meas_package) {
   /**
-   * TODO: Complete this function! Use lidar data to update the belief
-   * about the object's position. Modify the state vector, x_, and
-   * covariance, P_.
+   * Use lidar data to update the belief about the object's position.
+   * Modify the state vector, x_, and covariance, P_.
    * You can also calculate the lidar NIS, if desired.
-   */
+  */
+
+  VectorXd z = meas_package.raw_measurements_;
+
+  /**
+   * Predict measurement for lidar
+  */
+
+  MatrixXd Zsig = MatrixXd(n_z_lidar_, n_sig_);  // matrix for sigma points in measurement space
+  VectorXd z_pred = VectorXd(n_z_lidar_);           // mean predicted measurement
+  MatrixXd S = MatrixXd(n_z_lidar_, n_z_lidar_); // innovation covariance matrix S
+  MatrixXd T = MatrixXd(n_x_, n_z_lidar_);        // cross-corr between sigma points in state and meas space
+
+  // transform sigma points into measurement space
+  for (int i = 0; i < n_sig_; ++i) {
+    Zsig(0,i) = Xsig_pred_(0,i);  // x
+    Zsig(1,i) = Xsig_pred_(1,i);  // y
+  }
+
+  // mean predicted measurement
+  z_pred.fill(0.0);
+  for (int i=0; i < n_sig_; ++i) {
+    z_pred += weights_(i) * Zsig.col(i);
+  }
+
+  // S and T calculation
+  S.fill(0.0);
+  T.fill(0.0);
+
+  for (int i = 0; i < n_sig_; ++i) {  // it over simga points
+    VectorXd z_diff = Zsig.col(i) - z_pred;  // residual
+
+    S = S + weights_(i) * z_diff * z_diff.transpose();
+
+    VectorXd x_diff = Xsig_pred_.col(i) - x_;
+     // angle normalization
+    while (x_diff(3)> M_PI) x_diff(3)-=2.*M_PI;
+    while (x_diff(3)<-M_PI) x_diff(3)+=2.*M_PI;
+
+    T += weights_(i) * x_diff * z_diff.transpose();
+  }
+
+  S += R_lidar_;
+
+  /**
+   * Update
+  */
+
+  // Kalman gain K;
+  MatrixXd K = T * S.inverse();
+
+  VectorXd z_diff = meas_package.raw_measurements_ - z_pred;  // residual
+
+  // update state mean and covariance matrix
+  x_ = x_ + K * z_diff;
+  P_ = P_ - K * S * K.transpose();
+
+  // NIS
+  double eps = z_diff.transpose() * S.inverse() * z_diff;
+  NIS_lidar_.push_back(eps);
 }
 
 void UKF::UpdateRadar(MeasurementPackage meas_package) {
