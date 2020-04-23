@@ -57,8 +57,6 @@ class UKF {
 
   // state covariance matrix
   Eigen::MatrixXd P_;
-  Eigen::MatrixXd P_aug_;
-  Eigen::MatrixXd A_;  //square root
 
   // predicted sigma points matrix
   Eigen::MatrixXd Xsig_pred_;
